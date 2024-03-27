@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Profile Viewer</title>
+  <style>
+    /* Add your CSS styles here */
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .profile {
+      margin-bottom: 20px;
+    }
+    .repositories {
+      margin-bottom: 20px;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>GitHub Profile Viewer</h1>
+    <label for="username">Enter GitHub Username:</label>
+    <input type="text" id="username">
+    <button onclick="fetchGitHubData()">Get Profile</button>
+    <div id="profile" class="profile"></div>
+    <div id="repositories" class="repositories"></div>
+    <div id="error" class="error"></div>
+  </div>
+  
+  <script>
+    function fetchGitHubData() {
+      const username = document.getElementById('username').value;
+      const profileDiv = document.getElementById('profile');
+      const repositoriesDiv = document.getElementById('repositories');
+      const errorDiv = document.getElementById('error');
+      
+      profileDiv.innerHTML = '';
+      repositoriesDiv.innerHTML = '';
+      errorDiv.innerHTML = '';
+
+      fetch(`https://api.github.com/users/${username}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('User not found');
+          }
+          return response.json();
+        })
+        .then(data => {
+          profileDiv.innerHTML = `
+            <h2>${data.name || data.login}</h2>
+            <img src="${data.avatar_url}" alt="Profile Picture" width="100">
+            <p>Bio: ${data.bio || 'Not available'}</p>
+            <p>Followers: ${data.followers}</p>
+            <p>Following: ${data.following}</p>
+            <p>Public Repositories: ${data.public_repos}</p>
+          `;
+
+          return fetch(`https://api.github.com/users/${username}/repos`);
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to fetch repositories');
+          }
+          return response.json();
+        })
+        .then(repositories => {
+          repositoriesDiv.innerHTML = '<h2>Repositories</h2>';
+          repositories.forEach(repo => {
+            const repoLink = document.createElement('a');
+            repoLink.href = repo.html_url;
+            repoLink.textContent = repo.name;
+            repoLink.target = '_blank';
+            repositoriesDiv.appendChild(repoLink);
+            repositoriesDiv.appendChild(document.createElement('br'));
+          });
+        })
+        .catch(error => {
+          errorDiv.textContent = error.message;
+        });
+    }
+  </script>
+</body>
+</html>
